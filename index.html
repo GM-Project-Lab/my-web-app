@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Калькулятор ремонта</title>
+<meta name="theme-color" content="#0d6c78">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%94%A7%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#eef1f2;--surface:#fff;--ink:#15232b;--muted:#5d6b73;--line:#d3dadd;--accent:#0d6c78;--accent-ink:#fff;--soft:#dcecee;--warn:#8a5a00;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10181c;--surface:#182228;--ink:#e6eef1;--muted:#93a4ac;--line:#2b3a42;--accent:#4fb6c2;--accent-ink:#06171a;--soft:#1d3238;--warn:#e0b25a}}
+:root[data-theme="dark"]{--bg:#10181c;--surface:#182228;--ink:#e6eef1;--muted:#93a4ac;--line:#2b3a42;--accent:#4fb6c2;--accent-ink:#06171a;--soft:#1d3238;--warn:#e0b25a}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",Roboto,Arial,sans-serif}
+main{max-width:520px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0 0 4px;font-weight:600}
+.sub{color:var(--muted);margin:0 0 20px;font-size:14px}
+h2{font-size:15px;font-weight:600;margin:22px 0 8px}
+.classes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cls{text-align:left;background:var(--surface);color:var(--ink);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;font:inherit;cursor:pointer}
+.cls b{display:block;font-weight:600}
+.cls span{display:block;font-size:13px;color:var(--muted);line-height:1.35;margin-top:2px}
+.cls[aria-pressed="true"]{border-color:var(--accent);background:var(--soft)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+input{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:11px 12px}
+select{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:11px 12px}
+#part{font-size:22px;font-weight:500}
+.note{font-size:13px;color:var(--warn);margin:8px 0 0;min-height:1em}
+.result{background:var(--accent);color:var(--accent-ink);border-radius:12px;padding:18px 18px 16px;margin-top:22px}
+.result small{display:block;opacity:.85;font-size:14px}
+.price{font-size:44px;font-weight:600;line-height:1.1;margin:4px 0 12px;letter-spacing:-.5px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button.act{font:inherit;font-weight:500;background:var(--accent-ink);color:var(--accent);border:0;border-radius:8px;padding:9px 14px;cursor:pointer}
+button.ghost{font:inherit;background:none;color:var(--ink);border:1.5px solid var(--line);border-radius:8px;padding:9px 14px;cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:15px}
+td{padding:7px 0;border-bottom:1px solid var(--line)}
+td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+tr.total td{font-weight:600;border-bottom:0}
+details{margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:500}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.old{text-decoration:line-through;opacity:.8;font-size:18px}
+.dinfo{display:block;min-height:1.3em;margin:-6px 0 10px;font-size:14px;opacity:.95}
+button.act[aria-pressed="true"]{outline:3px solid var(--accent-ink)}
+button.ghost[aria-pressed="true"]{border-color:var(--accent);background:var(--soft)}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Калькулятор ремонта</h1>
+<p class="sub">Выберите вид ремонта и класс устройства, впишите цену запчасти и получите цену для клиента.</p>
+
+<h2>Вид ремонта</h2>
+<select id="type" aria-label="Вид ремонта"></select>
+
+<h2>Модель (необязательно)</h2>
+<input id="model" list="mlist" autocomplete="off" placeholder="Начните вводить: iPhone 13, Tab S9, iPad…">
+<datalist id="mlist"></datalist>
+<button class="ghost" id="tabbtn" type="button" aria-pressed="false" style="margin-top:8px">Это планшет</button>
+<p class="note" id="mnote" style="color:var(--muted)"></p>
+
+<h2>Класс устройства</h2>
+<div class="classes" id="classes"></div>
+
+<h2>Цена запчасти</h2>
+<label for="part">Сколько запчасть стоит вам, ₽</label>
+<input id="part" type="text" inputmode="numeric" autocomplete="off" placeholder="0">
+<p class="note" id="note"></p>
+<button class="ghost" id="job2btn" type="button" aria-pressed="false" style="margin-top:12px">+ Вторая работа</button>
+<div id="job2" hidden>
+<h2>Вторая работа (на этом же устройстве)</h2>
+<select id="type2" aria-label="Вторая работа"></select>
+<label for="part2" style="margin-top:10px">Запчасть для второй работы, ₽</label>
+<input id="part2" type="text" inputmode="numeric" autocomplete="off" placeholder="0">
+</div>
+
+<section class="result" aria-live="polite">
+<small id="ttl">Цена для клиента</small>
+<div class="price" id="price">—</div>
+<small class="dinfo" id="dinfo"></small>
+<div class="btns">
+<button class="act" id="copy" type="button">Скопировать</button>
+<button class="act" id="loyal" type="button" aria-pressed="false">Постоянный клиент</button>
+<button class="act" id="toggle" type="button">Показать расчёт</button>
+</div>
+<table id="break" hidden></table>
+</section>
+
+<details>
+<summary>Настройки прайса (для владельца)</summary>
+<div class="grid" id="settings"></div>
+<p class="hint">Изменения сохраняются в этом браузере. Чтобы все мастера видели одинаковые цифры, задайте их на каждом устройстве или оставьте по умолчанию.</p>
+<div class="btns" style="margin-top:12px"><button class="ghost" id="reset" type="button">Сбросить настройки</button></div>
+</details>
+</main>
+
+<script>
+const DEF={overhead:500,reserveMin:300,reservePct:5,share:50,step:50,discount:10,msplit:50,floor:300,tab:120,second:30,rates:[3450,5500,7400,9800],pct:[100,70,75,75,60,80,60,60,55,55,50,40,60,40,55]};
+const TYPES=['Замена дисплея','Замена аккумулятора','Замена нижнего шлейфа (зарядка)','Замена основной камеры','Замена фронтальной камеры','Замена задней крышки / стекла','Замена слухового динамика','Замена нижнего динамика','Замена микрофона','Замена шлейфа кнопок','Замена вибромотора','Замена стекла камеры','Замена сканера отпечатка','Замена SIM-лотка / разъёма SIM','Замена антенны / Wi-Fi шлейфа'];
+const CLS=[
+ {n:'Бюджет',d:'Redmi, Poco, Galaxy A0x–A3x, iPhone 11, 11 Pro и старше; планшеты Tab A, Redmi Pad, iPad 9',max:3500},
+ {n:'Средний',d:'Galaxy A5x/A7x, Note Pro+, iPhone 12–14, 11 Pro Max; планшеты iPad 10, Tab S9 FE',max:7000},
+ {n:'Верхний',d:'Galaxy S23/S24, Pixel 8/9, iPhone 12–14 Pro, 15, 16; планшеты iPad Air, Tab S9',max:12000},
+ {n:'Флагман',d:'Все Ultra, S25/S26, складные, iPhone 15 Pro и новее; планшеты iPad Pro, Tab Ultra',max:Infinity}
+];
+const MODELS=`1:iPhone 8,iPhone 8 Plus,iPhone X,iPhone XR,iPhone 11,iPhone 11 Pro,iPhone SE (2020),iPhone SE (2022),Galaxy A05,Galaxy A06,Galaxy A15,Galaxy A16,Galaxy A25,Galaxy A26,Galaxy A35,Redmi 12,Redmi 13,Redmi 13C,Redmi Note 12,Redmi Note 13,Redmi Note 13 Pro 5G,Redmi Note 14,Poco X6,Poco M6,Realme C55,Honor X8,Galaxy Tab A8,Galaxy Tab A9,Galaxy Tab A9+,Redmi Pad,Redmi Pad SE,Lenovo Tab M10,Huawei MatePad SE,iPad 7,iPad 8,iPad 9
+2:iPhone XS,iPhone XS Max,iPhone 11 Pro Max,iPhone 12,iPhone 12 mini,iPhone 13,iPhone 13 mini,iPhone 14,iPhone 14 Plus,iPhone 16e,Galaxy A55,Galaxy A56,Galaxy A75,Galaxy S20,Galaxy S21,Galaxy S22,Redmi Note 13 Pro+,Redmi Note 14 Pro+,Poco F6,Pixel 7a,Pixel 8a,Honor 200,Galaxy Tab S6 Lite,Galaxy Tab S9 FE,Galaxy Tab S9 FE+,Xiaomi Redmi Pad Pro,Xiaomi Pad 6,Xiaomi Pad 7,Huawei MatePad 11.5,iPad 10,iPad mini 6,iPad Air 4,iPad Air 5
+3:iPhone 12 Pro,iPhone 12 Pro Max,iPhone 13 Pro,iPhone 13 Pro Max,iPhone 14 Pro,iPhone 14 Pro Max,iPhone 15,iPhone 15 Plus,iPhone 16,iPhone 16 Plus,Galaxy S23,Galaxy S23+,Galaxy S24,Galaxy S24+,Pixel 8,Pixel 9,Xiaomi 13,Xiaomi 14,OnePlus 12,Galaxy Tab S9,Galaxy Tab S9+,Galaxy Tab S10+,Pixel Tablet,Xiaomi Pad 7 Pro,iPad mini 7,iPad Air 11 M2,iPad Air M3,iPad Pro 11 (2021),iPad Pro 12.9 (2021)
+4:iPhone 15 Pro,iPhone 15 Pro Max,iPhone 16 Pro,iPhone 16 Pro Max,iPhone 17,iPhone 17 Air,iPhone 17 Pro,iPhone 17 Pro Max,iPhone 18 Pro,iPhone 18 Pro Max,Galaxy S23 Ultra,Galaxy S24 Ultra,Galaxy S25,Galaxy S25+,Galaxy S25 Ultra,Galaxy S26,Galaxy S26+,Galaxy S26 Ultra,Galaxy Z Flip,Galaxy Z Fold,Xiaomi 14 Ultra,Xiaomi 15 Ultra,Pixel Pro Fold,Galaxy Tab S9 Ultra,Galaxy Tab S10 Ultra,iPad Pro 11 M4,iPad Pro 13 M4,iPad Pro M5`.split('\n').flatMap(l=>{const[c,t]=l.split(':');return t.split(',').map(n=>[n,+c-1])});
+let loyalOn=false,job2On=false,typ2=1,typ=0,modelHit=false,tabOn=false;const TABRE=/^(iPad|Galaxy Tab|Redmi Pad|Xiaomi Pad|Xiaomi Redmi Pad|Lenovo Tab|Huawei MatePad|Pixel Tablet)/i;const setTab=()=>{const b=document.getElementById('tabbtn');if(b)b.setAttribute('aria-pressed',tabOn)};let S=JSON.parse(JSON.stringify(DEF)),cur=0,last=null;
+try{const s=localStorage.getItem('repair-calc-v3');if(s)S=Object.assign(S,JSON.parse(s))}catch(e){}
+const $=id=>document.getElementById(id);
+const fmt=n=>Math.round(n).toLocaleString('ru-RU')+' ₽';
+function save(){try{localStorage.setItem('repair-calc-v3',JSON.stringify(S))}catch(e){}}
+
+function drawClasses(){
+ $('classes').innerHTML=CLS.map((c,i)=>`<button class="cls" type="button" data-i="${i}" aria-pressed="${i===cur}"><b>${c.n}</b><span>${c.d}</span></button>`).join('');
+ document.querySelectorAll('.cls').forEach(b=>b.onclick=()=>{cur=+b.dataset.i;drawClasses();calc()});
+}
+function drawSettings(){
+ const f=[['overhead','Расходы на ремонт, ₽'],['reserveMin','Гарантийный резерв, мин. ₽'],['reservePct','Резерв от запчасти, %'],['share','Доля мастера от работы, %'],['step','Округление цены, ₽'],['discount','Скидка постоянному, %'],['msplit','Доля мастера в скидке, %'],['floor','Мин. прибыль владельца после скидки, ₽'],['tab','Работа на планшетах, % от телефона'],['second','Скидка на вторую (дешёвую) работу, %']];
+ let h=f.map(([k,l])=>`<div><label for="s_${k}">${l}</label><input id="s_${k}" data-k="${k}" type="number" min="0" value="${S[k]}"></div>`).join('');
+ h+=CLS.map((c,i)=>`<div><label for="r_${i}">Работа за дисплей: ${c.n}, ₽</label><input id="r_${i}" data-r="${i}" type="number" min="0" value="${S.rates[i]}"></div>`).join('');
+ h+=TYPES.map((t,i)=>`<div><label for="p_${i}">${t}, % от дисплея</label><input id="p_${i}" data-p="${i}" type="number" min="0" value="${S.pct[i]}"></div>`).join('');
+ $('settings').innerHTML=h;
+ document.querySelectorAll('[data-k]').forEach(e=>e.oninput=()=>{S[e.dataset.k]=+e.value||0;save();calc()});
+ document.querySelectorAll('[data-r]').forEach(e=>e.oninput=()=>{S.rates[+e.dataset.r]=+e.value||0;save();calc()});
+ document.querySelectorAll('[data-p]').forEach(e=>e.oninput=()=>{S.pct[+e.dataset.p]=+e.value||0;save();calc()});
+}
+const num=id=>parseInt($(id).value.replace(/\D/g,''),10)||0;
+const wk=t=>Math.round(S.rates[cur]*S.pct[t]/100*(tabOn?S.tab/100:1)/50)*50;
+const nm=t=>TYPES[t].replace('Замена ','').toLowerCase();
+function calc(){
+ const part=num('part'),part2=job2On?num('part2'):0;
+ const c=CLS[cur];
+ $('note').textContent=(typ===0&&!modelHit&&part>c.max&&cur<3)?`Запчасть дороже обычной для класса «${c.n}». Проверьте, что класс выбран верно.`:'';
+ if(!part||(job2On&&!part2)){last=null;$('price').textContent='—';$('dinfo').textContent=job2On&&part&&!part2?'Введите цену запчасти для второй работы':'';$('break').innerHTML='';return}
+ const jobs=[{t:typ,part,work:wk(typ)}];
+ if(job2On)jobs.push({t:typ2,part:part2,work:wk(typ2)});
+ let dj=-1,sd=0;
+ if(jobs.length===2){dj=jobs[1].work<=jobs[0].work?1:0;sd=Math.round(jobs[dj].work*S.second/100/10)*10}
+ const partsSum=jobs.reduce((a,j)=>a+j.part,0);
+ const reserve=jobs.reduce((a,j)=>a+Math.max(S.reserveMin,j.part*S.reservePct/100),0);
+ const work=jobs.reduce((a,j)=>a+j.work,0)-sd;
+ const raw=partsSum+S.overhead+reserve+work;
+ const step=S.step>0?S.step:1;
+ const price=Math.ceil(raw/step)*step;
+ const master=work*S.share/100;
+ const owner=work-master+(price-raw);
+ let d=0,capped=false,dm=0,dO=0;
+ if(loyalOn){
+  const want=Math.floor(price*S.discount/100/10)*10;
+  const ms=Math.min(1,Math.max(0,S.msplit/100));
+  const byOwner=ms<1?(owner-S.floor)/(1-ms):Infinity;
+  const byMaster=ms>0?master/ms:Infinity;
+  const room=Math.max(0,Math.floor(Math.min(byOwner,byMaster)/10)*10);
+  d=Math.min(want,room);capped=room<want;
+ }
+ dm=Math.round(d*Math.min(1,Math.max(0,S.msplit/100)));dO=d-dm;
+ const fin=price-d;
+ last={price:fin};
+ $('price').innerHTML=d?`<span class="old">${fmt(price)}</span> ${fmt(fin)}`:fmt(price);
+ $('dinfo').textContent=!loyalOn?'':d?(capped?`Скидка ${fmt(d)}: это максимум, иначе вы или мастер потеряете больше допустимого`:`Скидка постоянному клиенту: −${fmt(d)}`):'Для этого ремонта скидку дать нельзя: прибыли не хватает';
+ const tb=tabOn?', планшет':'';
+ let rows='';
+ jobs.forEach((j,i)=>{const n=jobs.length>1?` ${i+1}`:'';
+  rows+=`<tr><td>Запчасть${n}</td><td>${fmt(j.part)}</td></tr><tr><td>Работа${n}: ${nm(j.t)} (${c.n.toLowerCase()}${tb})</td><td>${fmt(j.work)}</td></tr>`});
+ if(sd)rows+=`<tr><td>Скидка ${S.second}% на дешёвую работу: ${nm(jobs[dj].t)}</td><td>−${fmt(sd)}</td></tr>`;
+ $('break').innerHTML=rows+`<tr><td>Расходы сервиса (один раз)</td><td>${fmt(S.overhead)}</td></tr>
+ <tr><td>Гарантийный резерв</td><td>${fmt(reserve)}</td></tr>
+ <tr><td>Округление</td><td>${fmt(price-raw)}</td></tr>
+ ${d?`<tr><td>Скидка клиенту</td><td>−${fmt(d)}</td></tr>`:''}
+ <tr class="total"><td>Итого клиенту</td><td>${fmt(fin)}</td></tr>
+ <tr><td>Мастеру${dm?` (−${fmt(dm)} из скидки)`:''}</td><td>${fmt(master-dm)}</td></tr>
+ <tr><td>Владельцу${dO?` (−${fmt(dO)} из скидки)`:''}</td><td>${fmt(owner-dO)}</td></tr>`;
+}
+$('part2').oninput=e=>{const v=e.target.value.replace(/\D/g,'');e.target.value=v?(+v).toLocaleString('ru-RU'):'';calc()};
+$('part').oninput=e=>{const v=e.target.value.replace(/\D/g,'');e.target.value=v?(+v).toLocaleString('ru-RU'):'';calc()};
+$('loyal').onclick=()=>{loyalOn=!loyalOn;$('loyal').setAttribute('aria-pressed',loyalOn);calc()};
+$('toggle').onclick=()=>{const t=$('break');t.hidden=!t.hidden;$('toggle').textContent=t.hidden?'Показать расчёт':'Скрыть расчёт'};
+$('copy').onclick=()=>{
+ if(!last)return;
+ const txt=`${TYPES[typ]}${job2On?' + '+nm(typ2):''}, ${CLS[cur].n.toLowerCase()}: ${fmt(last.price)} с работой и гарантией${loyalOn?' (цена для постоянного клиента)':''}`;
+ const done=()=>{$('copy').textContent='Скопировано';setTimeout(()=>$('copy').textContent='Скопировать',1500)};
+ const fb=()=>{const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){}a.remove()};
+ try{navigator.clipboard.writeText(txt).then(done,fb)}catch(e){fb()}
+};
+$('type').innerHTML=TYPES.map((t,i)=>`<option value="${i}">${t}</option>`).join('');
+$('mlist').innerHTML=MODELS.map(m=>`<option value="${m[0]}">`).join('');
+$('model').oninput=e=>{const m=MODELS.find(x=>x[0].toLowerCase()===e.target.value.trim().toLowerCase());modelHit=!!m;if(m){cur=m[1];tabOn=TABRE.test(m[0]);setTab();drawClasses();calc();$('mnote').textContent='Класс определён автоматически: '+CLS[cur].n+(tabOn?'. Планшет: работа ×'+(S.tab/100).toString().replace('.',','):'')}else{$('mnote').textContent='';calc()}};
+$('type2').innerHTML=TYPES.map((t,i)=>`<option value="${i}">${t}</option>`).join('');$('type2').value=1;
+$('type2').onchange=e=>{typ2=+e.target.value;calc()};
+$('job2btn').onclick=()=>{job2On=!job2On;$('job2').hidden=!job2On;$('job2btn').setAttribute('aria-pressed',job2On);$('job2btn').textContent=job2On?'− Убрать вторую работу':'+ Вторая работа';calc()};
+$('tabbtn').onclick=()=>{tabOn=!tabOn;setTab();calc()};
+$('type').onchange=e=>{typ=+e.target.value;calc()};
+$('reset').onclick=()=>{S=JSON.parse(JSON.stringify(DEF));save();drawSettings();calc()};
+drawClasses();drawSettings();calc();
+</script>
+</body>
+</html>
